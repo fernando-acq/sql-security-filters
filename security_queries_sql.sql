@@ -11,19 +11,9 @@ USE security_db;
 -- Objetivo: Identificar possível incidente de segurança ocorrido 
 -- fora do horário comercial (após 18:00)
 
-SELECT 
-    'CENÁRIO 1: Tentativas de Login Falhadas Após Expediente' AS Investigacao;
-
-SELECT 
-    attempt_id,
-    username,
-    login_date,
-    login_time,
-    country,
-    ip_address
+SELECT *
 FROM log_in_attempts
-WHERE login_time > '18:00:00' AND success = 0
-ORDER BY login_date, login_time;
+WHERE login_time > '18:00:00' AND success = 0;
 
 -- ============================================
 -- CENÁRIO 2: Atividade Suspeita em Datas Específicas
@@ -31,23 +21,9 @@ ORDER BY login_date, login_time;
 -- Objetivo: Investigar evento suspeito ocorrido em 2022-05-09
 -- e no dia anterior (2022-05-08)
 
-SELECT 
-    'CENÁRIO 2: Tentativas de Login nas Datas 2022-05-08 e 2022-05-09' AS Investigacao;
-
-SELECT 
-    attempt_id,
-    username,
-    login_date,
-    login_time,
-    country,
-    ip_address,
-    CASE 
-        WHEN success = 1 THEN 'Sucesso'
-        ELSE 'Falha'
-    END AS status_login
+SELECT *
 FROM log_in_attempts
-WHERE login_date = '2022-05-09' OR login_date = '2022-05-08'
-ORDER BY login_date, login_time;
+WHERE login_date = '2022-05-09' OR login_date = '2022-05-08';
 
 -- ============================================
 -- CENÁRIO 3: Tentativas de Login Fora do México
@@ -55,23 +31,9 @@ ORDER BY login_date, login_time;
 -- Objetivo: Investigar atividade suspeita originada fora do México
 -- Usa wildcard (%) para capturar variações (MEX, MEXICO)
 
-SELECT 
-    'CENÁRIO 3: Tentativas de Login Fora do México' AS Investigacao;
-
-SELECT 
-    attempt_id,
-    username,
-    login_date,
-    login_time,
-    country,
-    ip_address,
-    CASE 
-        WHEN success = 1 THEN 'Sucesso'
-        ELSE 'Falha'
-    END AS status_login
+SELECT *
 FROM log_in_attempts
-WHERE NOT country LIKE 'MEX%'
-ORDER BY login_date, login_time;
+WHERE NOT country LIKE 'MEX%';
 
 -- ============================================
 -- CENÁRIO 4: Funcionários do Marketing no Prédio Leste
@@ -79,18 +41,9 @@ ORDER BY login_date, login_time;
 -- Objetivo: Identificar máquinas do departamento de Marketing
 -- localizadas no prédio Leste para aplicar updates de segurança
 
-SELECT 
-    'CENÁRIO 4: Funcionários de Marketing no Prédio Leste' AS Investigacao;
-
-SELECT 
-    employee_id,
-    username,
-    department,
-    office,
-    email
+SELECT *
 FROM employees
-WHERE department = 'Marketing' AND office LIKE 'East%'
-ORDER BY office;
+WHERE department = 'Marketing' AND office LIKE 'East%';
 
 -- ============================================
 -- CENÁRIO 5: Funcionários de Finanças ou Vendas
@@ -98,18 +51,9 @@ ORDER BY office;
 -- Objetivo: Aplicar atualização de segurança em máquinas dos
 -- departamentos de Vendas (Sales) e Finanças (Finance)
 
-SELECT 
-    'CENÁRIO 5: Funcionários de Finanças ou Vendas' AS Investigacao;
-
-SELECT 
-    employee_id,
-    username,
-    department,
-    office,
-    email
+SELECT *
 FROM employees
-WHERE department = 'Finance' OR department = 'Sales'
-ORDER BY department, username;
+WHERE department = 'Finance' OR department = 'Sales';
 
 -- ============================================
 -- CENÁRIO 6: Funcionários Fora do Departamento de TI
@@ -117,56 +61,34 @@ ORDER BY department, username;
 -- Objetivo: Identificar colaboradores que ainda precisam receber
 -- update de segurança (TI já foi atualizado)
 
-SELECT 
-    'CENÁRIO 6: Funcionários Fora do Departamento de TI' AS Investigacao;
-
-SELECT 
-    employee_id,
-    username,
-    department,
-    office,
-    email
+SELECT *
 FROM employees
-WHERE NOT department = 'Information Technology'
-ORDER BY department, username;
+WHERE NOT department = 'Information Technology';
 
 -- ============================================
--- ANÁLISES ADICIONAIS
+-- ANÁLISES EXTRAS - Queries Complementares
 -- ============================================
 
--- Estatísticas de tentativas de login por país
-SELECT 
-    'ANÁLISE EXTRA: Tentativas de Login por País' AS Investigacao;
-
-SELECT 
-    country AS Pais,
-    COUNT(*) AS Total_Tentativas,
-    SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) AS Sucessos,
-    SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS Falhas,
-    ROUND(SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS Taxa_Sucesso
+-- Contar total de tentativas de login falhadas
+SELECT COUNT(*) AS total_falhas
 FROM log_in_attempts
-GROUP BY country
-ORDER BY Total_Tentativas DESC;
+WHERE success = 0;
 
--- Distribuição de funcionários por departamento
-SELECT 
-    'ANÁLISE EXTRA: Funcionários por Departamento' AS Investigacao;
+-- Contar total de tentativas de login bem-sucedidas
+SELECT COUNT(*) AS total_sucessos
+FROM log_in_attempts
+WHERE success = 1;
 
-SELECT 
-    department AS Departamento,
-    COUNT(*) AS Total_Funcionarios
+-- Contar tentativas de login do México
+SELECT COUNT(*) AS tentativas_mexico
+FROM log_in_attempts
+WHERE country LIKE 'MEX%';
+
+-- Contar funcionários do departamento de Marketing
+SELECT COUNT(*) AS total_marketing
 FROM employees
-GROUP BY department
-ORDER BY Total_Funcionarios DESC;
+WHERE department = 'Marketing';
 
--- Tentativas de login por hora do dia
-SELECT 
-    'ANÁLISE EXTRA: Tentativas de Login por Horário' AS Investigacao;
-
-SELECT 
-    HOUR(login_time) AS Hora,
-    COUNT(*) AS Total_Tentativas,
-    SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS Falhas
-FROM log_in_attempts
-GROUP BY HOUR(login_time)
-ORDER BY Hora;
+-- Listar todos os departamentos únicos
+SELECT DISTINCT department
+FROM employees;
